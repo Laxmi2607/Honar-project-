@@ -1,0 +1,62 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Post {
+  id          String   @id @default(cuid())
+  title       String
+  content     String   @default("")
+  excerpt     String   @default("")
+  category    String   @default("General")
+  tags        String   @default("") // comma-separated
+  status      String   @default("draft") // draft, published, scheduled
+  slug        String   @unique
+  coverImage  String   @default("")
+  author      String   @default("Alex Creator")
+  views       Int      @default(0)
+  likes       Int      @default(0)
+  scheduledFor DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  socialPublishes SocialPublish[]
+
+  @@index([status])
+  @@index([category])
+  @@index([createdAt])
+}
+
+model SocialPublish {
+  id          String   @id @default(cuid())
+  postId      String
+  platform    String   // instagram, twitter, youtube, linkedin, tiktok, etc.
+  status      String   @default("pending") // pending, published, failed, removed
+  externalId  String?  // ID from the platform
+  externalUrl String?  // URL on the platform
+  publishedAt DateTime?
+  error       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([postId])
+  @@index([platform])
+  @@unique([postId, platform])
+}
+
+model SocialAccount {
+  id        String   @id @default(cuid())
+  platform  String   @unique // instagram, twitter, youtube, linkedin
+  handle    String
+  followers String   @default("0")
+  status    String   @default("connected") // connected, needs_reconnect, disconnected
+  avatarUrl String   @default("")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
